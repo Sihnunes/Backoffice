@@ -560,6 +560,30 @@ const riskMeta = {
 function normalizeHeader_(s){
   return String(s||'').trim().replace(/\s+/g,' ').toLowerCase();
 }
+function findColumnsDebugInfo_(ws, headerName){
+  // Retorna todas as colunas cujo cabeçalho bate com headerName (deveria ser
+  // só uma) e um valor de amostra de cada, pra diagnosticar coluna duplicada
+  // ou coluna errada sendo lida.
+  if(!ws['!ref']) return [];
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  const target = normalizeHeader_(headerName);
+  const matches = [];
+  for(let c = range.s.c; c <= range.e.c; c++){
+    const headerCell = ws[XLSX.utils.encode_cell({r: range.s.r, c})];
+    if(headerCell && normalizeHeader_(headerCell.v) === target){
+      let sample = null;
+      for(let r = range.s.r + 1; r <= range.e.r && sample === null; r++){
+        const cell = ws[XLSX.utils.encode_cell({r, c})];
+        if(cell){
+          const v = cell.w !== undefined && cell.w !== '' ? cell.w : (cell.v !== undefined ? String(cell.v) : null);
+          if(v !== null && v !== '') sample = v;
+        }
+      }
+      matches.push({ letter: XLSX.utils.encode_col(c), sample });
+    }
+  }
+  return matches;
+}
 function getColumnDisplayText_(ws, headerName){
   if(!ws['!ref']) return [];
   const range = XLSX.utils.decode_range(ws['!ref']);
@@ -651,9 +675,20 @@ function handleFile(file){
       saveDataset(rows, meta);
       renderDataset(rows, meta);
 
+      // Diagnóstico: mostra qual coluna (letra) e que valor de amostra foi
+      // encontrado pra cada campo-chave, e alerta se achou a mesma coluna
+      // em mais de um lugar (cabeçalho duplicado).
+      const debugCampos = ['Nota Fiscal','Data Entrega','Previsão Entrega Cliente','Situação','Performance'];
+      const debugLinhas = debugCampos.map(nome=>{
+        const matches = findColumnsDebugInfo_(ws, nome);
+        if(matches.length===0) return `${nome}: NÃO ENCONTRADA`;
+        if(matches.length>1) return `${nome}: ⚠ achou em ${matches.length} colunas (${matches.map(m=>m.letter).join(', ')}) — usando a coluna ${matches[0].letter}, amostra: "${matches[0].sample||'(vazio)'}"`;
+        return `${nome}: coluna ${matches[0].letter}, amostra: "${matches[0].sample||'(vazio)'}"`;
+      });
+      const fileMetaEl = document.getElementById('fileMeta');
+      fileMetaEl.innerHTML = fileMetaEl.textContent + '<br><span style="font-size:11px;">Diagnóstico de colunas — ' + debugLinhas.join(' · ') + '</span>';
       if(colunasNaoEncontradas.length){
-        document.getElementById('fileMeta').textContent += ' · Atenção: colunas não encontradas no Excel — ' + colunasNaoEncontradas.join(', ');
-        document.getElementById('fileMeta').style.color = 'var(--risco-critico)';
+        fileMetaEl.style.color = 'var(--risco-critico)';
       }
 
       if(SHARED_MODE){
