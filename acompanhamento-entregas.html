@@ -760,26 +760,36 @@ function renderTable(rows){
   }).join('');
 }
 
+function normalizeNf(v){
+  // Mesma lógica do backend: casa observação pela NF ignorando pontuação
+  // e zeros à esquerda, pra sobreviver a mudanças de formatação entre exports.
+  let s = String(v||'').replace(/[^\d]/g,'');
+  s = s.replace(/^0+(?=\d)/,'');
+  return s;
+}
 function getObsStore(){
   try{ return JSON.parse(localStorage.getItem('tb_cx_entregas_obs')||'{}'); }catch(e){ return {}; }
 }
 function getObs(nf){
-  if(SHARED_MODE) return (state.obs[nf] && state.obs[nf].text) || '';
+  const key = normalizeNf(nf);
+  if(SHARED_MODE) return (state.obs[key] && state.obs[key].text) || '';
   const store = getObsStore();
-  return store[nf] ? store[nf].text : '';
+  return store[key] ? store[key].text : '';
 }
 function saveObsLocalCache(nf, text){
+  const key = normalizeNf(nf);
   const store = getObsStore();
   if(text && text.trim()){
-    store[nf] = { text: text, updatedAt: new Date().toISOString() };
+    store[key] = { text: text, updatedAt: new Date().toISOString() };
   } else {
-    delete store[nf];
+    delete store[key];
   }
   localStorage.setItem('tb_cx_entregas_obs', JSON.stringify(store));
 }
 async function saveObs(nf, text){
+  const key = normalizeNf(nf);
   if(SHARED_MODE){
-    state.obs[nf] = { text: text, updatedAt: new Date().toISOString() };
+    state.obs[key] = { text: text, updatedAt: new Date().toISOString() };
     try{
       await apiPost({action:'saveObs', nf, texto:text});
       return true;
