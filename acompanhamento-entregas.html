@@ -51,7 +51,7 @@
   .wrap{max-width:1440px; margin:0 auto; padding:0 28px 60px;}
 
   .upload-zone{
-    margin-top:-20px; margin-bottom:26px;
+    margin-top:0; margin-bottom:26px;
     background:#fff;
     border:1.5px dashed var(--tb-gold);
     border-radius:10px;
@@ -233,6 +233,13 @@
 
 <div class="wrap">
 
+  <div class="pill-toggle" id="viewTabs" style="display:inline-flex; margin-top:28px; margin-bottom:28px;">
+    <div class="pill active" data-view="atual">Painel atual</div>
+    <div class="pill" data-view="historico">Histórico de atrasos</div>
+  </div>
+
+  <div id="viewAtual">
+
   <div class="upload-zone" id="dropZone">
     <div class="upload-icon">⇪</div>
     <div class="upload-text">
@@ -322,6 +329,55 @@
 
   </div>
 
+  </div><!-- /viewAtual -->
+
+  <div id="viewHistorico" style="display:none;">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Histórico de atrasos</h2>
+          <div class="desc">Toda NF que já esteve com Situação = Atrasado, ou foi entregue com atraso, em qualquer base enviada — mesmo que não esteja mais no arquivo mais recente. Atualiza sozinho a cada novo envio de base.</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-sec" id="btnRefreshHist">Atualizar histórico</button>
+        </div>
+      </div>
+      <div class="controls">
+        <input type="text" id="histSearchBox" placeholder="Buscar por nota fiscal ou nome...">
+        <select id="histPresenteFilter">
+          <option value="">Base atual (todas)</option>
+          <option value="sim">Ainda na base atual</option>
+          <option value="nao">Sumiu da base atual</option>
+        </select>
+        <div class="spacer"></div>
+        <span style="font-size:11.5px; color:#8a8172;" id="histRowCount"></span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <colgroup>
+            <col style="width:9%"><col style="width:15%"><col style="width:10%">
+            <col style="width:10%"><col style="width:10%"><col style="width:11%">
+            <col style="width:11%"><col style="width:9%"><col style="width:15%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Nota Fiscal</th>
+              <th>Destinatário / UF</th>
+              <th>Transportadora</th>
+              <th>Situação (última vez)</th>
+              <th>Status (última vez)</th>
+              <th>1ª vez atrasado</th>
+              <th>Última vez atrasado</th>
+              <th>Base atual</th>
+              <th>Observação CX</th>
+            </tr>
+          </thead>
+          <tbody id="histTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /viewHistorico -->
+
   <footer>Painel gerado a partir do export Intelipost · quando a base compartilhada está configurada, os dados ficam numa planilha do Google acessível apenas ao time.</footer>
 </div>
 
@@ -341,9 +397,17 @@ const CONFIG = {
 const SHARED_MODE = !!CONFIG.API_URL;
 
 const state = { rows: [], filtered: [], sortKey:'risk', sortDir:1, risk:'all', search:'', transp:'', obsFilter:'', obs:{} };
+const histState = { rows: [], search:'', presente:'' };
 
 async function apiGet(){
   const res = await fetch(CONFIG.API_URL + '?action=getData&_=' + Date.now());
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if(!data.ok) throw new Error(data.error || 'Erro desconhecido na API');
+  return data;
+}
+async function apiGetHistorico(){
+  const res = await fetch(CONFIG.API_URL + '?action=getHistorico&_=' + Date.now());
   if(!res.ok) throw new Error('HTTP ' + res.status);
   const data = await res.json();
   if(!data.ok) throw new Error(data.error || 'Erro desconhecido na API');
@@ -826,6 +890,97 @@ function renderTable(rows){
   }).join('');
 }
 
+document.getElementById('viewTabs').addEventListener('click', e=>{
+  const pill = e.target.closest('.pill');
+  if(!pill) return;
+  [...document.querySelectorAll('#viewTabs .pill')].forEach(p=>p.classList.remove('active'));
+  pill.classList.add('active');
+  const view = pill.dataset.view;
+  document.getElementById('viewAtual').style.display = view === 'atual' ? '' : 'none';
+  document.getElementById('viewHistorico').style.display = view === 'historico' ? '' : 'none';
+  if(view === 'historico') loadHistorico();
+});
+
+document.getElementById('btnRefreshHist').addEventListener('click', loadHistorico);
+document.getElementById('histSearchBox').addEventListener('input', e=>{
+  histState.search = e.target.value.trim().toLowerCase();
+  applyHistoricoFilters();
+});
+document.getElementById('histPresenteFilter').addEventListener('change', e=>{
+  histState.presente = e.target.value;
+  applyHistoricoFilters();
+});
+
+async function loadHistorico(){
+  const btn = document.getElementById('btnRefreshHist');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Atualizando...';
+  document.getElementById('histRowCount').textContent = 'Carregando...';
+  try{
+    const data = await apiGetHistorico();
+    histState.rows = (data.rows||[]).map(r => ({
+      nf: String(r.nf||''),
+      dest: r.dest||'', cidade: r.cidade||'', uf: r.uf||'', transp: r.transp||'',
+      situacao: r.situacao||'', status: r.status||'',
+      primeiraVezAtrasado: parseDate(r.primeiraVezAtrasado),
+      ultimaVezAtrasado: parseDate(r.ultimaVezAtrasado),
+      presente: r.presenteNaBaseAtual === true || r.presenteNaBaseAtual === 'TRUE' || r.presenteNaBaseAtual === 'true',
+    }));
+    applyHistoricoFilters();
+  }catch(err){
+    document.getElementById('histRowCount').textContent = 'Erro ao carregar: ' + err.message;
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+function applyHistoricoFilters(){
+  let rows = histState.rows;
+  if(histState.presente === 'sim') rows = rows.filter(r=>r.presente);
+  else if(histState.presente === 'nao') rows = rows.filter(r=>!r.presente);
+  if(histState.search){
+    const nfStripped = stripLeadingZeros(histState.search);
+    rows = rows.filter(r=>{
+      const nfLower = r.nf.toLowerCase();
+      return nfLower.includes(histState.search) || (nfStripped && stripLeadingZeros(nfLower).includes(nfStripped)) || r.dest.toLowerCase().includes(histState.search);
+    });
+  }
+  rows = rows.slice().sort((a,b)=>{
+    const av = a.ultimaVezAtrasado ? a.ultimaVezAtrasado.getTime() : 0;
+    const bv = b.ultimaVezAtrasado ? b.ultimaVezAtrasado.getTime() : 0;
+    return bv - av; // mais recente primeiro
+  });
+  renderHistorico(rows);
+  document.getElementById('histRowCount').textContent = rows.length + ' registro(s)';
+}
+
+function renderHistorico(rows){
+  const tbody = document.getElementById('histTableBody');
+  if(rows.length===0){
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Nenhum registro no histórico ainda — ele vai se preenchendo a cada base enviada.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r=>{
+    const obs = getObs(r.nf);
+    return `<tr>
+      <td class="nf">${escapeHtml(r.nf)}</td>
+      <td>${escapeHtml(r.dest) || '—'}${r.cidade?`<br><span class="msg">${escapeHtml(r.cidade)}${r.uf?'/'+escapeHtml(r.uf):''}</span>`:''}</td>
+      <td>${escapeHtml(r.transp) || '—'}</td>
+      <td>${escapeHtml(r.situacao) || '—'}</td>
+      <td>${escapeHtml(r.status) || '—'}</td>
+      <td class="updated">${fmtDateTime(r.primeiraVezAtrasado)}</td>
+      <td class="updated">${fmtDateTime(r.ultimaVezAtrasado)}</td>
+      <td><span class="badge ${r.presente ? 'normal' : 'critico'}">${r.presente ? 'Sim' : 'Sumiu'}</span></td>
+      <td class="obs-cell">
+        <textarea class="obs-input" data-nf="${escapeHtml(r.nf)}" placeholder="Ex: cliente avisado por WhatsApp em 07/07...">${escapeHtml(obs)}</textarea>
+        <div class="obs-saved">Salvo ✓</div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
 function normalizeNf(v){
   // Mesma lógica do backend: casa observação pela NF ignorando pontuação
   // e zeros à esquerda, pra sobreviver a mudanças de formatação entre exports.
@@ -870,7 +1025,7 @@ async function saveObs(nf, text){
   }
 }
 
-document.getElementById('tableBody').addEventListener('input', e=>{
+document.body.addEventListener('input', e=>{
   if(!e.target.classList.contains('obs-input')) return;
   const nf = e.target.dataset.nf;
   const badge = e.target.parentElement.querySelector('.obs-saved');
@@ -885,7 +1040,7 @@ document.getElementById('tableBody').addEventListener('input', e=>{
     if(ok) setTimeout(()=>badge.classList.remove('show'), 1200);
   }, 500);
 });
-document.getElementById('tableBody').addEventListener('blur', e=>{
+document.body.addEventListener('blur', e=>{
   if(!e.target.classList.contains('obs-input')) return;
   clearTimeout(e.target._saveTimer);
   saveObs(e.target.dataset.nf, e.target.value);
