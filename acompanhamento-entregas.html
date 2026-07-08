@@ -2,6 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Acompanhamento de Entregas · CX Tania Bulhões</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,6 +73,34 @@
     transition:background .15s;
   }
   .upload-btn:hover{background:var(--tb-green-dark);}
+  #btnRefresh{
+    box-shadow: 0 3px 0 var(--tb-green), 0 5px 10px rgba(44,79,58,.18);
+    transform: translateY(0);
+    transition: transform .1s ease, box-shadow .1s ease, background .15s, color .15s;
+  }
+  #btnRefresh:hover:not(:disabled){ background:var(--tb-cream-2); }
+  #btnRefresh:active:not(:disabled){
+    transform: translateY(3px);
+    box-shadow: 0 0 0 var(--tb-green), 0 1px 3px rgba(44,79,58,.18);
+  }
+  #btnRefresh:disabled{
+    cursor: default;
+    transform: translateY(3px);
+    box-shadow: 0 0 0 var(--tb-green), 0 1px 3px rgba(44,79,58,.18);
+    opacity:.9;
+  }
+  #btnRefresh.is-loading{ padding-left:32px; position:relative; }
+  #btnRefresh.is-loading::before{
+    content:'';
+    position:absolute; left:12px; top:50%; margin-top:-7px;
+    width:14px; height:14px;
+    border:2px solid rgba(44,79,58,.25);
+    border-top-color: var(--tb-green);
+    border-radius:50%;
+    animation: btnRefreshSpin .6s linear infinite;
+  }
+  #btnRefresh.is-success{ background:var(--tb-green); color:#fff; }
+  @keyframes btnRefreshSpin{ to{ transform: rotate(360deg); } }
   input[type=file]{display:none;}
   .file-meta{font-size:12px; color:#7c7466; margin-top:2px;}
 
@@ -568,11 +599,11 @@ function renderDataset(rows, meta){
 }
 
 (function init(){
-  document.getElementById('btnRefresh').addEventListener('click', ()=> loadShared(true));
+  document.getElementById('btnRefresh').addEventListener('click', manualRefresh);
   if(SHARED_MODE){
     document.getElementById('btnRefresh').style.display = 'inline-block';
-    loadShared(false);
-    setInterval(()=> loadShared(true), CONFIG.POLL_INTERVAL_MS);
+    loadShared('initial');
+    setInterval(()=> loadShared('poll'), CONFIG.POLL_INTERVAL_MS);
   } else {
     setSyncStatus('Modo local — cada pessoa vê só o que carregou neste navegador. Configure CONFIG.API_URL para compartilhar com o time.');
     const saved = loadDataset();
@@ -582,8 +613,41 @@ function renderDataset(rows, meta){
   }
 })();
 
-async function loadShared(isPoll){
-  // não sobrescreve enquanto alguém está digitando uma observação
+async function manualRefresh(){
+  const btn = document.getElementById('btnRefresh');
+  if(btn.disabled) return; // evita cliques duplicados enquanto já está atualizando
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.classList.remove('is-success');
+  btn.classList.add('is-loading');
+  btn.textContent = 'Atualizando...';
+  let ok = true;
+  try{
+    await loadShared('manual');
+  } catch(err){
+    ok = false;
+    // erro já foi mostrado no status de sincronização por loadShared()
+  } finally {
+    btn.classList.remove('is-loading');
+    btn.disabled = false;
+    if(ok){
+      btn.textContent = 'Atualizado ✓';
+      btn.classList.add('is-success');
+      setTimeout(()=>{
+        btn.classList.remove('is-success');
+        btn.textContent = originalText;
+      }, 1400);
+    } else {
+      btn.textContent = originalText;
+    }
+  }
+}
+
+async function loadShared(mode){
+  // mode: 'initial' (carga ao abrir a página) | 'poll' (atualização automática silenciosa)
+  // | 'manual' (clique no botão Atualizar — sempre mostra o resultado, mesmo sem mudanças)
+  const isPoll = mode === 'poll';
+  const isManual = mode === 'manual';
   if(isPoll && document.activeElement && document.activeElement.classList.contains('obs-input')) return;
   if(!isPoll) setSyncStatus('Carregando base compartilhada...');
   try{
@@ -594,18 +658,20 @@ async function loadShared(isPoll){
     if(rows.length){
       saveDataset(rows, meta); // cache local de emergência
       renderDataset(rows, meta);
-    } else if(!isPoll){
+      setSyncStatus('Sincronizado com o time · ' + new Date().toLocaleTimeString('pt-BR'));
+    } else {
       setSyncStatus('Base compartilhada ainda vazia — envie o export de hoje.');
     }
-    if(rows.length) setSyncStatus('Sincronizado com o time · ' + new Date().toLocaleTimeString('pt-BR'));
   }catch(err){
     setSyncStatus('Sem conexão com a base compartilhada, mostrando cache local. ' + err.message, true);
     if(!isPoll){
       const saved = loadDataset();
       if(saved && saved.rows && saved.rows.length) renderDataset(saved.rows, saved.meta);
     }
+    if(isManual) throw err; // deixa o botão avisar que a tentativa falhou
   }
 }
+
 
 function populateTransportFilter(rows){
   const sel = document.getElementById('transpFilter');
