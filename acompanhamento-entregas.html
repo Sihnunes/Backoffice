@@ -9,7 +9,7 @@
 <title>Acompanhamento de Entregas · CX Tania Bulhões</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Carlito:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
@@ -28,7 +28,7 @@
     --risco-entregue-bg:#f1efe9;
     --ink:#2a2723;
     --line:#e2dbc9;
-    font-family:'Carlito',sans-serif;
+    font-family:'DM Sans',sans-serif;
   }
   *{box-sizing:border-box;}
   body{
@@ -44,10 +44,10 @@
     padding:28px 36px 26px;
   }
   .topbar .eyebrow{
-    font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--tb-gold); font-weight:600; margin-bottom:6px;
+    font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--tb-gold); font-weight:600; margin-bottom:6px;
   }
-  .topbar h1{font-size:30px; color:#fff;}
-  .topbar .sub{font-size:13.5px; color:#d9d3bf; margin-top:6px; max-width:640px; line-height:1.5;}
+  .topbar h1{font-size:34px; color:#fff;}
+  .topbar .sub{font-size:15px; color:#d9d3bf; margin-top:6px; max-width:640px; line-height:1.5;}
   .wrap{max-width:1440px; margin:0 auto; padding:0 28px 60px;}
 
   .upload-zone{
@@ -63,13 +63,13 @@
   .upload-icon{
     width:44px; height:44px; flex:0 0 auto; border-radius:50%;
     background:var(--tb-cream-2); display:flex; align-items:center; justify-content:center;
-    color:var(--tb-green); font-size:20px;
+    color:var(--tb-green); font-size:22px;
   }
-  .upload-text b{display:block; font-size:14.5px; color:var(--tb-green-dark);}
-  .upload-text span{font-size:12.5px; color:#7c7466;}
+  .upload-text b{display:block; font-size:16px; color:var(--tb-green-dark);}
+  .upload-text span{font-size:13.5px; color:#7c7466;}
   .upload-btn{
     margin-left:auto; background:var(--tb-green); color:#fff; border:none; padding:10px 18px;
-    border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; font-family:'Carlito',sans-serif;
+    border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif;
     transition:background .15s;
   }
   .upload-btn:hover{background:var(--tb-green-dark);}
@@ -102,13 +102,13 @@
   #btnRefresh.is-success{ background:var(--tb-green); color:#fff; }
   @keyframes btnRefreshSpin{ to{ transform: rotate(360deg); } }
   input[type=file]{display:none;}
-  .file-meta{font-size:12px; color:#7c7466; margin-top:2px;}
+  .file-meta{font-size:13px; color:#7c7466; margin-top:2px;}
 
   .empty-state{
     text-align:center; padding:80px 20px; color:#8a8172;
   }
-  .empty-state h2{font-size:22px; color:var(--tb-green-dark); margin-bottom:8px;}
-  .empty-state p{font-size:14px; max-width:420px; margin:0 auto;}
+  .empty-state h2{font-size:24px; color:var(--tb-green-dark); margin-bottom:8px;}
+  .empty-state p{font-size:15px; max-width:420px; margin:0 auto;}
 
   #dashboard{display:none;}
 
@@ -123,22 +123,22 @@
   }
   .kpi:last-child{border-right:none;}
   .kpi .l{
-    font-family:'Carlito',sans-serif; font-size:10.5px; color:var(--tb-gold); margin-bottom:10px;
-    text-transform:uppercase; letter-spacing:.09em; font-weight:700;
+    font-family:'DM Sans',sans-serif; font-size:10.5px; color:var(--tb-gold); margin-bottom:8px;
+    text-transform:uppercase; letter-spacing:.08em; font-weight:700;
   }
   .kpi .n{
-    font-family:'Carlito',sans-serif; font-size:34px; font-weight:600; color:var(--tb-green-dark);
+    font-family:'DM Sans',sans-serif; font-size:30px; font-weight:600; color:var(--tb-green-dark);
     line-height:1; letter-spacing:-.01em;
   }
   .kpi .sub{
-    font-family:'Carlito',sans-serif; font-size:11px; color:#a39c8c; margin-top:9px;
+    font-family:'DM Sans',sans-serif; font-size:11px; color:#a39c8c; margin-top:8px;
   }
   .kpi.crit .n{color:var(--risco-critico);}
   .kpi.aten .n{color:var(--risco-atencao);}
 
   .new-alert{
     background:var(--risco-critico-bg); border:1px solid #eec9c2; color:var(--risco-critico);
-    padding:12px 16px; border-radius:8px; font-size:13px; margin-bottom:22px; display:none;
+    padding:12px 16px; border-radius:8px; font-size:14px; margin-bottom:22px; display:none;
     align-items:center; gap:8px;
   }
   .new-alert b{font-weight:700;}
@@ -150,44 +150,44 @@
     padding:18px 22px; border-bottom:1px solid var(--line);
     display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
   }
-  .panel-head h2{font-size:20px; color:var(--tb-green-dark);}
-  .panel-head .desc{font-size:12.5px; color:#8a8172; margin-top:3px;}
+  .panel-head h2{font-size:22px; color:var(--tb-green-dark);}
+  .panel-head .desc{font-size:13.5px; color:#8a8172; margin-top:3px;}
 
   .controls{
     padding:14px 22px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;
     border-bottom:1px solid var(--line); background:#fbfaf6;
   }
   .controls input[type=text], .controls select{
-    font-family:'Carlito',sans-serif; font-size:12.5px; padding:8px 10px; border:1px solid var(--line);
+    font-family:'DM Sans',sans-serif; font-size:13.5px; padding:8px 10px; border:1px solid var(--line);
     border-radius:6px; background:#fff; color:var(--ink);
   }
   .controls input[type=text]{width:240px;}
   .pill-toggle{display:flex; gap:6px; flex-wrap:wrap;}
   .pill{
-    font-size:11.5px; padding:6px 12px; border-radius:100px; border:1px solid var(--line);
+    font-size:12.5px; padding:7px 13px; border-radius:100px; border:1px solid var(--line);
     background:#fff; cursor:pointer; font-weight:600; color:#7c7466; user-select:none;
   }
   .pill.active{background:var(--tb-green); color:#fff; border-color:var(--tb-green);}
   .spacer{flex:1;}
   .btn-sec{
-    font-size:12px; font-weight:600; padding:8px 14px; border-radius:6px; border:1px solid var(--tb-green);
-    background:#fff; color:var(--tb-green); cursor:pointer; font-family:'Carlito',sans-serif;
+    font-size:13px; font-weight:600; padding:8px 14px; border-radius:6px; border:1px solid var(--tb-green);
+    background:#fff; color:var(--tb-green); cursor:pointer; font-family:'DM Sans',sans-serif;
   }
   .btn-sec:hover{background:var(--tb-cream-2);}
 
-  table{width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed;}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; table-layout:fixed;}
   thead th{
     text-align:left; padding:10px 12px; background:var(--tb-cream-2); color:var(--tb-green-dark);
-    font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; font-weight:700;
+    font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; font-weight:700;
     position:sticky; top:0; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
   thead th:hover{color:var(--tb-gold);}
   tbody td{padding:10px 12px; border-top:1px solid var(--line); vertical-align:top; overflow-wrap:break-word; overflow:hidden;}
   tbody tr:hover{background:#fbfaf6;}
-  .table-scroll{max-height:600px; overflow-y:auto; overflow-x:hidden;}
+  .table-scroll{max-height:600px; overflow-y:auto; overflow-x:auto;}
 
   .badge{
-    display:inline-block; font-size:9.5px; font-weight:700; padding:3px 8px; border-radius:100px;
+    display:inline-block; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:100px;
     text-transform:uppercase; letter-spacing:.02em; white-space:normal; line-height:1.3; max-width:100%;
   }
   .badge.critico{background:var(--risco-critico-bg); color:var(--risco-critico);}
@@ -196,25 +196,25 @@
   .badge.entregue{background:var(--risco-entregue-bg); color:var(--risco-entregue);}
   .badge.novo{background:var(--tb-green); color:#fff; margin-left:6px;}
 
-  .nf{font-weight:700; color:var(--tb-green-dark);}
+  .nf{font-weight:700; color:var(--tb-green-dark); font-size:12.5px; white-space:nowrap;}
   .msg{color:#7c7466; display:block; line-height:1.5; white-space:normal; word-wrap:break-word;}
-  .updated{font-size:11.5px; color:#8a8172;}
-  .days{font-size:11px; color:#8a8172; display:block; margin-top:2px;}
+  .updated{font-size:12.5px; color:#8a8172;}
+  .days{font-size:12px; color:#8a8172; display:block; margin-top:2px;}
   .days.late{color:var(--risco-critico); font-weight:600;}
 
   .obs-cell{}
   .obs-input{
-    width:100%; min-height:44px; resize:vertical; font-family:'Carlito',sans-serif; font-size:12px;
+    width:100%; min-height:44px; resize:vertical; font-family:'DM Sans',sans-serif; font-size:13px;
     padding:7px 9px; border:1px solid var(--line); border-radius:6px; background:#fbfaf6; color:var(--ink);
     line-height:1.4; box-sizing:border-box;
   }
   .obs-input:focus{outline:none; border-color:var(--tb-gold); background:#fff;}
-  .obs-saved{font-size:10px; color:var(--risco-normal); margin-top:3px; opacity:0; transition:opacity .3s;}
+  .obs-saved{font-size:11px; color:var(--risco-normal); margin-top:3px; opacity:0; transition:opacity .3s;}
   .obs-saved.show{opacity:1;}
 
   .empty-row td{text-align:center; padding:36px; color:#a39c8c; font-style:italic;}
 
-  footer{text-align:center; font-size:11.5px; color:#a39c8c; padding:20px 0 40px;}
+  footer{text-align:center; font-size:12.5px; color:#a39c8c; padding:20px 0 40px;}
 
   @media(max-width:900px){
     .kpi-row{grid-template-columns:repeat(2,1fr);}
@@ -233,7 +233,7 @@
 
 <div class="wrap">
 
-  <div class="pill-toggle" id="viewTabs" style="display:inline-flex; margin-top:28px; margin-bottom:28px;">
+  <div class="pill-toggle" id="viewTabs" style="display:inline-flex; margin-top:28px; margin-bottom:26px;">
     <div class="pill active" data-view="atual">Painel atual</div>
     <div class="pill" data-view="historico">Histórico de atrasos</div>
   </div>
@@ -299,13 +299,13 @@
           <option value="sem">Sem observação</option>
         </select>
         <div class="spacer"></div>
-        <span style="font-size:11.5px; color:#8a8172;" id="rowCount"></span>
+        <span style="font-size:12.5px; color:#8a8172;" id="rowCount"></span>
       </div>
       <div class="table-scroll">
-        <table>
+        <table style="min-width:1300px;">
           <colgroup>
-            <col style="width:9%"><col style="width:7%"><col style="width:10%"><col style="width:7%">
-            <col style="width:8%"><col style="width:7%"><col style="width:8%"><col style="width:8%">
+            <col style="width:8%"><col style="width:9%"><col style="width:10%"><col style="width:7%">
+            <col style="width:8%"><col style="width:7%"><col style="width:8%"><col style="width:7%">
             <col style="width:18%"><col style="width:18%">
           </colgroup>
           <thead>
@@ -317,8 +317,8 @@
               <th data-sort="previsao">Previsão</th>
               <th data-sort="situacao">Situação</th>
               <th data-sort="status">Status transp.</th>
-              <th data-sort="atualizado">Última atualização</th>
-              <th>Última ocorrência / Mensagem</th>
+              <th data-sort="atualizado" title="Última atualização">Atualizado em</th>
+              <th title="Última ocorrência / Mensagem">Ocorrência / Msg.</th>
               <th>Observação CX</th>
             </tr>
           </thead>
@@ -350,25 +350,24 @@
           <option value="nao">Sumiu da base atual</option>
         </select>
         <div class="spacer"></div>
-        <span style="font-size:11.5px; color:#8a8172;" id="histRowCount"></span>
+        <span style="font-size:12.5px; color:#8a8172;" id="histRowCount"></span>
       </div>
       <div class="table-scroll">
-        <table>
+        <table style="min-width:1080px;">
           <colgroup>
-            <col style="width:9%"><col style="width:15%"><col style="width:10%">
-            <col style="width:10%"><col style="width:10%"><col style="width:11%">
-            <col style="width:11%"><col style="width:9%"><col style="width:15%">
+            <col style="width:12%"><col style="width:15%"><col style="width:10%">
+            <col style="width:10%"><col style="width:10%"><col style="width:15%">
+            <col style="width:10%"><col style="width:14%">
           </colgroup>
           <thead>
             <tr>
               <th>Nota Fiscal</th>
               <th>Destinatário / UF</th>
               <th>Transportadora</th>
-              <th>Situação (última vez)</th>
-              <th>Status (última vez)</th>
-              <th>1ª vez atrasado</th>
-              <th>Última vez atrasado</th>
-              <th>Base atual</th>
+              <th>Previsão Entrega Cliente</th>
+              <th>Data Entrega</th>
+              <th title="Compara a data prevista de entrega com a data real de entrega">Situação (previsto x real)</th>
+              <th>Performance</th>
               <th>Observação CX</th>
             </tr>
           </thead>
@@ -574,6 +573,17 @@ function buildRows(json, nfTextByRow){
     .map(({r, nfText})=>{
       const risk = classify(r);
       const nfSource = (nfText !== null && nfText !== undefined && nfText !== '') ? nfText : get(r,'Nota Fiscal');
+      const status = str(get(r,'Status Transportador'));
+      // Nome da coluna de data de entrega real pode variar entre exports —
+      // tenta as variações mais comuns e cai pra "data do último status"
+      // quando já está com status Entregue.
+      const dataEntregaRaw = get(r,'Data de Entrega') ?? get(r,'Data Entrega') ?? get(r,'Data da Entrega')
+        ?? get(r,'Data Entrega Realizada') ?? get(r,'Data de Entrega Realizada') ?? get(r,'Entregue em')
+        ?? get(r,'Data da Entrega Realizada') ?? get(r,'Data Real de Entrega') ?? get(r,'Data Real Entrega');
+      let dataEntrega = parseDate(dataEntregaRaw);
+      if(!dataEntrega && status === 'Entregue'){
+        dataEntrega = parseDate(get(r,'Data do último status')) || parseDate(get(r,'Atualizado em'));
+      }
       return {
         risk,
         nf: str(nfSource),
@@ -583,10 +593,12 @@ function buildRows(json, nfTextByRow){
         transp: str(get(r,'Transportadora')),
         previsao: parseDate(get(r,'Previsão Entrega Cliente')),
         situacao: str(get(r,'Situação')),
-        status: str(get(r,'Status Transportador')),
+        status: status,
         atualizado: parseDate(get(r,'Data do último status')) || parseDate(get(r,'Atualizado em')),
         msg: str(get(r,'Mensagem Intelipost')) || str(get(r,'Última Ocorrência (Macro)')),
         ocorrenciaMacro: str(get(r,'Última Ocorrência (Macro)')),
+        performance: str(get(r,'Performance')),
+        dataEntrega: dataEntrega,
       };
     });
 }
@@ -610,7 +622,7 @@ function handleFile(file){
       if(SHARED_MODE){
         setSyncStatus('Enviando para a base compartilhada...');
         try{
-          const serial = rows.map(r=>({...r, previsao: r.previsao?r.previsao.toISOString():'', atualizado: r.atualizado?r.atualizado.toISOString():''}));
+          const serial = rows.map(r=>({...r, previsao: r.previsao?r.previsao.toISOString():'', atualizado: r.atualizado?r.atualizado.toISOString():'', dataEntrega: r.dataEntrega?r.dataEntrega.toISOString():''}));
           const result = await apiPost({action:'uploadBase', rows: serial, meta});
           setSyncStatus('Sincronizado com o time · ' + new Date().toLocaleTimeString('pt-BR'));
           if(result.novosCriticos && result.novosCriticos.length){
@@ -631,7 +643,7 @@ function handleFile(file){
 const DATASET_KEY = 'tb_cx_entregas_dataset';
 function saveDataset(rows, meta){
   try{
-    const serial = rows.map(r=>({...r, previsao: r.previsao?r.previsao.toISOString():null, atualizado: r.atualizado?r.atualizado.toISOString():null}));
+    const serial = rows.map(r=>({...r, previsao: r.previsao?r.previsao.toISOString():null, atualizado: r.atualizado?r.atualizado.toISOString():null, dataEntrega: r.dataEntrega?r.dataEntrega.toISOString():null}));
     localStorage.setItem(DATASET_KEY, JSON.stringify({rows: serial, meta}));
   }catch(e){
     console.warn('Não foi possível salvar a base localmente (localStorage cheio ou indisponível).', e);
@@ -922,7 +934,9 @@ async function loadHistorico(){
     histState.rows = (data.rows||[]).map(r => ({
       nf: String(r.nf||''),
       dest: r.dest||'', cidade: r.cidade||'', uf: r.uf||'', transp: r.transp||'',
-      situacao: r.situacao||'', status: r.status||'',
+      previsao: parseDate(r.previsao),
+      dataEntrega: parseDate(r.dataEntrega),
+      performance: r.performance||'',
       primeiraVezAtrasado: parseDate(r.primeiraVezAtrasado),
       ultimaVezAtrasado: parseDate(r.ultimaVezAtrasado),
       presente: r.presenteNaBaseAtual === true || r.presenteNaBaseAtual === 'TRUE' || r.presenteNaBaseAtual === 'true',
@@ -956,23 +970,44 @@ function applyHistoricoFilters(){
   document.getElementById('histRowCount').textContent = rows.length + ' registro(s)';
 }
 
+function situacaoPrevistoReal(r){
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const previsao = r.previsao ? new Date(r.previsao) : null;
+  if(previsao) previsao.setHours(0,0,0,0);
+  const entrega = r.dataEntrega ? new Date(r.dataEntrega) : null;
+  if(entrega) entrega.setHours(0,0,0,0);
+
+  if(entrega){
+    if(!previsao) return {label:'Entregue (sem previsão p/ comparar)', cls:'normal'};
+    const diff = Math.round((entrega - previsao) / 86400000);
+    if(diff <= 0) return {label:'Entregue no prazo', cls:'normal'};
+    return {label:`Entregue com atraso (${diff} dia(s))`, cls:'entregue'};
+  }
+  if(previsao){
+    const diff = Math.round((hoje - previsao) / 86400000);
+    if(diff > 0) return {label:`Atrasado, ainda não entregue (${diff} dia(s))`, cls:'critico'};
+    return {label:'Ainda não entregue (dentro do prazo)', cls:'atencao'};
+  }
+  return {label:'Sem dados suficientes', cls:'normal'};
+}
+
 function renderHistorico(rows){
   const tbody = document.getElementById('histTableBody');
   if(rows.length===0){
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Nenhum registro no histórico ainda — ele vai se preenchendo a cada base enviada.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Nenhum registro no histórico ainda — ele vai se preenchendo a cada base enviada.</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(r=>{
     const obs = getObs(r.nf);
+    const sit = situacaoPrevistoReal(r);
     return `<tr>
       <td class="nf">${escapeHtml(r.nf)}</td>
       <td>${escapeHtml(r.dest) || '—'}${r.cidade?`<br><span class="msg">${escapeHtml(r.cidade)}${r.uf?'/'+escapeHtml(r.uf):''}</span>`:''}</td>
       <td>${escapeHtml(r.transp) || '—'}</td>
-      <td>${escapeHtml(r.situacao) || '—'}</td>
-      <td>${escapeHtml(r.status) || '—'}</td>
-      <td class="updated">${fmtDateTime(r.primeiraVezAtrasado)}</td>
-      <td class="updated">${fmtDateTime(r.ultimaVezAtrasado)}</td>
-      <td><span class="badge ${r.presente ? 'normal' : 'critico'}">${r.presente ? 'Sim' : 'Sumiu'}</span></td>
+      <td>${fmtDate(r.previsao)}</td>
+      <td>${fmtDate(r.dataEntrega)}</td>
+      <td><span class="badge ${sit.cls}">${sit.label}</span></td>
+      <td>${escapeHtml(r.performance) || '—'}</td>
       <td class="obs-cell">
         <textarea class="obs-input" data-nf="${escapeHtml(r.nf)}" placeholder="Ex: cliente avisado por WhatsApp em 07/07...">${escapeHtml(obs)}</textarea>
         <div class="obs-saved">Salvo ✓</div>
