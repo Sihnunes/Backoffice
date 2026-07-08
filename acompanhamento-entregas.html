@@ -557,13 +557,17 @@ const riskMeta = {
   entregue: {label:'Entregue', badge:'entregue', order:4},
 };
 
+function normalizeHeader_(s){
+  return String(s||'').trim().replace(/\s+/g,' ').toLowerCase();
+}
 function getColumnDisplayText_(ws, headerName){
   if(!ws['!ref']) return [];
   const range = XLSX.utils.decode_range(ws['!ref']);
+  const target = normalizeHeader_(headerName);
   let colIndex = -1;
   for(let c = range.s.c; c <= range.e.c; c++){
     const headerCell = ws[XLSX.utils.encode_cell({r: range.s.r, c})];
-    if(headerCell && String(headerCell.v).trim() === headerName){ colIndex = c; break; }
+    if(headerCell && normalizeHeader_(headerCell.v) === target){ colIndex = c; break; }
   }
   if(colIndex === -1) return [];
   const out = [];
@@ -640,11 +644,17 @@ function handleFile(file){
         situacao: getColumnDisplayText_(ws, 'Situação'),
         performance: getColumnDisplayText_(ws, 'Performance'),
       };
+      const colunasNaoEncontradas = Object.entries(cols).filter(([,arr])=>arr.length===0).map(([nome])=>nome);
       const rows = buildRows(json, cols);
       const meta = { filename: file.name, uploadedAt: new Date().toISOString() };
 
       saveDataset(rows, meta);
       renderDataset(rows, meta);
+
+      if(colunasNaoEncontradas.length){
+        document.getElementById('fileMeta').textContent += ' · Atenção: colunas não encontradas no Excel — ' + colunasNaoEncontradas.join(', ');
+        document.getElementById('fileMeta').style.color = 'var(--risco-critico)';
+      }
 
       if(SHARED_MODE){
         setSyncStatus('Enviando para a base compartilhada...');
