@@ -179,7 +179,7 @@
   thead th{
     text-align:left; padding:10px 12px; background:var(--tb-cream-2); color:var(--tb-green-dark);
     font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; font-weight:700;
-    position:sticky; top:0; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    position:sticky; top:0; cursor:pointer; white-space:normal; line-height:1.35; vertical-align:bottom;
   }
   thead th:hover{color:var(--tb-gold);}
   tbody td{padding:10px 12px; border-top:1px solid var(--line); vertical-align:top; overflow-wrap:break-word; overflow:hidden;}
@@ -366,7 +366,7 @@
               <th>Transportadora</th>
               <th>Previsão Entrega Cliente</th>
               <th>Data Entrega</th>
-              <th title="Compara a data prevista de entrega com a data real de entrega">Situação (previsto x real)</th>
+              <th>Situação</th>
               <th>Performance</th>
               <th>Observação CX</th>
             </tr>
@@ -566,24 +566,35 @@ function getColumnDisplayText_(ws, headerName){
 }
 function stripLeadingZeros(s){ return String(s||'').replace(/^0+(?=\d)/, ''); }
 
-function buildRows(json, nfTextByRow){
+function buildRows(json, cols){
+  cols = cols || {};
   return json
-    .map((r,i)=>({ r, nfText: nfTextByRow ? nfTextByRow[i] : null }))
-    .filter(pair => get(pair.r,'Nota Fiscal') !== null)
-    .map(({r, nfText})=>{
+    .map((r,i)=>({ r, i }))
+    .filter(pair => get(pair.r,'Nota Fiscal') !== null || (cols.nf && cols.nf[pair.i]))
+    .map(({r, i})=>{
       const risk = classify(r);
-      const nfSource = (nfText !== null && nfText !== undefined && nfText !== '') ? nfText : get(r,'Nota Fiscal');
+      const cellOrNull = (arr) => (arr && arr[i] !== null && arr[i] !== undefined && arr[i] !== '') ? arr[i] : null;
+
+      const nfCell = cellOrNull(cols.nf);
+      const nfSource = nfCell !== null ? nfCell : get(r,'Nota Fiscal');
+
       const status = str(get(r,'Status Transportador'));
-      // Nome da coluna de data de entrega real pode variar entre exports —
-      // tenta as variações mais comuns e cai pra "data do último status"
-      // quando já está com status Entregue.
-      const dataEntregaRaw = get(r,'Data de Entrega') ?? get(r,'Data Entrega') ?? get(r,'Data da Entrega')
-        ?? get(r,'Data Entrega Realizada') ?? get(r,'Data de Entrega Realizada') ?? get(r,'Entregue em')
-        ?? get(r,'Data da Entrega Realizada') ?? get(r,'Data Real de Entrega') ?? get(r,'Data Real Entrega');
-      let dataEntrega = parseDate(dataEntregaRaw);
+
+      const previsaoCell = cellOrNull(cols.previsao);
+      const previsao = parseDate(previsaoCell) || parseDate(get(r,'Previsão Entrega Cliente'));
+
+      const situacaoCell = cellOrNull(cols.situacao);
+      const situacao = situacaoCell !== null ? str(situacaoCell) : str(get(r,'Situação'));
+
+      const performanceCell = cellOrNull(cols.performance);
+      const performance = performanceCell !== null ? str(performanceCell) : str(get(r,'Performance'));
+
+      const dataEntregaCell = cellOrNull(cols.dataEntrega);
+      let dataEntrega = parseDate(dataEntregaCell);
       if(!dataEntrega && status === 'Entregue'){
         dataEntrega = parseDate(get(r,'Data do último status')) || parseDate(get(r,'Atualizado em'));
       }
+
       return {
         risk,
         nf: str(nfSource),
@@ -591,13 +602,13 @@ function buildRows(json, nfTextByRow){
       cidade: str(get(r,'Cidade do Destinatário')),
         uf: str(get(r,'UF')),
         transp: str(get(r,'Transportadora')),
-        previsao: parseDate(get(r,'Previsão Entrega Cliente')),
-        situacao: str(get(r,'Situação')),
+        previsao: previsao,
+        situacao: situacao,
         status: status,
         atualizado: parseDate(get(r,'Data do último status')) || parseDate(get(r,'Atualizado em')),
         msg: str(get(r,'Mensagem Intelipost')) || str(get(r,'Última Ocorrência (Macro)')),
         ocorrenciaMacro: str(get(r,'Última Ocorrência (Macro)')),
-        performance: str(get(r,'Performance')),
+        performance: performance,
         dataEntrega: dataEntrega,
       };
     });
@@ -612,8 +623,14 @@ function handleFile(file){
       const wb = XLSX.read(data, {type:'array', cellDates:true});
       const ws = wb.Sheets[wb.SheetNames[0]];
       const json = XLSX.utils.sheet_to_json(ws, {defval:null, blankrows:true});
-      const nfTextByRow = getColumnDisplayText_(ws, 'Nota Fiscal');
-      const rows = buildRows(json, nfTextByRow);
+      const cols = {
+        nf: getColumnDisplayText_(ws, 'Nota Fiscal'),
+        previsao: getColumnDisplayText_(ws, 'Previsão Entrega Cliente'),
+        dataEntrega: getColumnDisplayText_(ws, 'Data Entrega'),
+        situacao: getColumnDisplayText_(ws, 'Situação'),
+        performance: getColumnDisplayText_(ws, 'Performance'),
+      };
+      const rows = buildRows(json, cols);
       const meta = { filename: file.name, uploadedAt: new Date().toISOString() };
 
       saveDataset(rows, meta);
@@ -936,6 +953,7 @@ async function loadHistorico(){
       dest: r.dest||'', cidade: r.cidade||'', uf: r.uf||'', transp: r.transp||'',
       previsao: parseDate(r.previsao),
       dataEntrega: parseDate(r.dataEntrega),
+      situacao: r.situacao||'',
       performance: r.performance||'',
       primeiraVezAtrasado: parseDate(r.primeiraVezAtrasado),
       ultimaVezAtrasado: parseDate(r.ultimaVezAtrasado),
@@ -970,25 +988,12 @@ function applyHistoricoFilters(){
   document.getElementById('histRowCount').textContent = rows.length + ' registro(s)';
 }
 
-function situacaoPrevistoReal(r){
-  const hoje = new Date(); hoje.setHours(0,0,0,0);
-  const previsao = r.previsao ? new Date(r.previsao) : null;
-  if(previsao) previsao.setHours(0,0,0,0);
-  const entrega = r.dataEntrega ? new Date(r.dataEntrega) : null;
-  if(entrega) entrega.setHours(0,0,0,0);
-
-  if(entrega){
-    if(!previsao) return {label:'Entregue (sem previsão p/ comparar)', cls:'normal'};
-    const diff = Math.round((entrega - previsao) / 86400000);
-    if(diff <= 0) return {label:'Entregue no prazo', cls:'normal'};
-    return {label:`Entregue com atraso (${diff} dia(s))`, cls:'entregue'};
-  }
-  if(previsao){
-    const diff = Math.round((hoje - previsao) / 86400000);
-    if(diff > 0) return {label:`Atrasado, ainda não entregue (${diff} dia(s))`, cls:'critico'};
-    return {label:'Ainda não entregue (dentro do prazo)', cls:'atencao'};
-  }
-  return {label:'Sem dados suficientes', cls:'normal'};
+function situacaoBadgeClass(sit){
+  const s = (sit||'').toLowerCase();
+  if(s.includes('atrasado')) return 'critico';
+  if(s.includes('entregue')) return 'normal';
+  if(!s) return '';
+  return 'atencao';
 }
 
 function renderHistorico(rows){
@@ -999,14 +1004,13 @@ function renderHistorico(rows){
   }
   tbody.innerHTML = rows.map(r=>{
     const obs = getObs(r.nf);
-    const sit = situacaoPrevistoReal(r);
     return `<tr>
       <td class="nf">${escapeHtml(r.nf)}</td>
       <td>${escapeHtml(r.dest) || '—'}${r.cidade?`<br><span class="msg">${escapeHtml(r.cidade)}${r.uf?'/'+escapeHtml(r.uf):''}</span>`:''}</td>
       <td>${escapeHtml(r.transp) || '—'}</td>
       <td>${fmtDate(r.previsao)}</td>
       <td>${fmtDate(r.dataEntrega)}</td>
-      <td><span class="badge ${sit.cls}">${sit.label}</span></td>
+      <td>${r.situacao ? `<span class="badge ${situacaoBadgeClass(r.situacao)}">${escapeHtml(r.situacao)}</span>` : '—'}</td>
       <td>${escapeHtml(r.performance) || '—'}</td>
       <td class="obs-cell">
         <textarea class="obs-input" data-nf="${escapeHtml(r.nf)}" placeholder="Ex: cliente avisado por WhatsApp em 07/07...">${escapeHtml(obs)}</textarea>
