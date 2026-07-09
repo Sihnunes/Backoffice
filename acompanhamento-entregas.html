@@ -345,11 +345,6 @@
       </div>
       <div class="controls">
         <input type="text" id="histSearchBox" placeholder="Buscar por nota fiscal ou nome...">
-        <select id="histPresenteFilter">
-          <option value="">Base atual (todas)</option>
-          <option value="sim">Ainda na base atual</option>
-          <option value="nao">Sumiu da base atual</option>
-        </select>
         <div class="spacer"></div>
         <span style="font-size:12.5px; color:#8a8172;" id="histRowCount"></span>
       </div>
@@ -391,13 +386,13 @@
       (cada pessoa vê apenas o que ela mesma carregou).
    ============================================================ */
 const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbzFEo6sJPP2URtjM1fIsFDTlxRhnx6BBiTRrw3aJgL6D3uqwF4fxPS64ZMMkJMqJucy/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbzoq9OwkniqXCtUSYZmTAUq4sEo7sLghSUX3gQmmBMt7Y7gEBnrgB_yOv9w6nxsmw9aAw/exec',
   POLL_INTERVAL_MS: 45000,  // frequência de atualização automática (45s)
 };
 const SHARED_MODE = !!CONFIG.API_URL;
 
 const state = { rows: [], filtered: [], sortKey:'risk', sortDir:1, risk:'all', search:'', transp:'', obsFilter:'', obs:{} };
-const histState = { rows: [], search:'', presente:'' };
+const histState = { rows: [], search:'' };
 
 async function apiGet(){
   const res = await fetch(CONFIG.API_URL + '?action=getData&_=' + Date.now());
@@ -990,10 +985,6 @@ document.getElementById('histSearchBox').addEventListener('input', e=>{
   histState.search = e.target.value.trim().toLowerCase();
   applyHistoricoFilters();
 });
-document.getElementById('histPresenteFilter').addEventListener('change', e=>{
-  histState.presente = e.target.value;
-  applyHistoricoFilters();
-});
 
 async function loadHistorico(){
   const btn = document.getElementById('btnRefreshHist');
@@ -1010,9 +1001,6 @@ async function loadHistorico(){
       dataEntrega: parseDate(r.dataEntrega),
       situacao: r.situacao||'',
       performance: r.performance||'',
-      primeiraVezAtrasado: parseDate(r.primeiraVezAtrasado),
-      ultimaVezAtrasado: parseDate(r.ultimaVezAtrasado),
-      presente: r.presenteNaBaseAtual === true || r.presenteNaBaseAtual === 'TRUE' || r.presenteNaBaseAtual === 'true',
     }));
     applyHistoricoFilters();
   }catch(err){
@@ -1025,8 +1013,6 @@ async function loadHistorico(){
 
 function applyHistoricoFilters(){
   let rows = histState.rows;
-  if(histState.presente === 'sim') rows = rows.filter(r=>r.presente);
-  else if(histState.presente === 'nao') rows = rows.filter(r=>!r.presente);
   if(histState.search){
     const nfStripped = stripLeadingZeros(histState.search);
     rows = rows.filter(r=>{
@@ -1035,9 +1021,9 @@ function applyHistoricoFilters(){
     });
   }
   rows = rows.slice().sort((a,b)=>{
-    const av = a.ultimaVezAtrasado ? a.ultimaVezAtrasado.getTime() : 0;
-    const bv = b.ultimaVezAtrasado ? b.ultimaVezAtrasado.getTime() : 0;
-    return bv - av; // mais recente primeiro
+    const av = a.previsao ? a.previsao.getTime() : 0;
+    const bv = b.previsao ? b.previsao.getTime() : 0;
+    return bv - av; // previsão mais recente primeiro
   });
   renderHistorico(rows);
   document.getElementById('histRowCount').textContent = rows.length + ' registro(s)';
