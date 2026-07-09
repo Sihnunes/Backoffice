@@ -235,15 +235,6 @@
 
 <div class="wrap">
 
-  <div class="kpi-row" id="kpiRowGlobal">
-    <div class="kpi"><div class="l">Total de notas</div><div class="n" id="kpiTotal">0</div><div class="sub">No período</div></div>
-    <div class="kpi crit"><div class="l">Crítico</div><div class="n" id="kpiCritico">0</div><div class="sub">Ação imediata</div></div>
-    <div class="kpi aten"><div class="l">Atenção</div><div class="n" id="kpiAtencao">0</div><div class="sub">Monitorar</div></div>
-    <div class="kpi"><div class="l">Em trânsito</div><div class="n" id="kpiNormal">0</div><div class="sub">No prazo</div></div>
-    <div class="kpi"><div class="l">Entregues</div><div class="n" id="kpiEntregue">0</div><div class="sub">Total no período</div></div>
-    <div class="kpi"><div class="l">Entregues no prazo</div><div class="n" id="kpiPercNoPrazo">0%</div><div class="sub">Sobre entregues</div></div>
-  </div>
-
   <div class="pill-toggle" id="viewTabs" style="display:inline-flex; margin-top:28px; margin-bottom:26px;">
     <div class="pill active" data-view="atual">Painel atual</div>
     <div class="pill" data-view="historico">Histórico de atrasos</div>
@@ -274,6 +265,14 @@
 
   <div id="dashboard">
 
+    <div class="kpi-row" id="kpiRowGlobal">
+      <div class="kpi"><div class="l">Total de notas</div><div class="n" id="kpiTotal">0</div><div class="sub">No período</div></div>
+      <div class="kpi crit"><div class="l">Crítico</div><div class="n" id="kpiCritico">0</div><div class="sub">Ação imediata</div></div>
+      <div class="kpi aten"><div class="l">Atenção</div><div class="n" id="kpiAtencao">0</div><div class="sub">Monitorar</div></div>
+      <div class="kpi"><div class="l">Em trânsito</div><div class="n" id="kpiNormal">0</div><div class="sub">No prazo</div></div>
+      <div class="kpi"><div class="l">Entregues</div><div class="n" id="kpiEntregue">0</div><div class="sub">Total no período</div></div>
+      <div class="kpi"><div class="l">Entregues no prazo</div><div class="n" id="kpiPercNoPrazo">0%</div><div class="sub">Sobre entregues</div></div>
+    </div>
     <div class="panel">
       <div class="panel-head">
         <div>
@@ -671,19 +670,9 @@ function handleFile(file){
       saveDataset(rows, meta);
       renderDataset(rows, meta);
 
-      // Diagnóstico: mostra qual coluna (letra) e que valor de amostra foi
-      // encontrado pra cada campo-chave, e alerta se achou a mesma coluna
-      // em mais de um lugar (cabeçalho duplicado).
-      const debugCampos = ['Nota Fiscal','Data Entrega','Previsão Entrega Cliente','Situação','Performance'];
-      const debugLinhas = debugCampos.map(nome=>{
-        const matches = findColumnsDebugInfo_(ws, nome);
-        if(matches.length===0) return `${nome}: NÃO ENCONTRADA`;
-        if(matches.length>1) return `${nome}: ⚠ achou em ${matches.length} colunas (${matches.map(m=>m.letter).join(', ')}) — usando a coluna ${matches[0].letter}, amostra: "${matches[0].sample||'(vazio)'}"`;
-        return `${nome}: coluna ${matches[0].letter}, amostra: "${matches[0].sample||'(vazio)'}"`;
-      });
-      const fileMetaEl = document.getElementById('fileMeta');
-      fileMetaEl.innerHTML = fileMetaEl.textContent + '<br><span style="font-size:11px;">Diagnóstico de colunas — ' + debugLinhas.join(' · ') + '</span>';
       if(colunasNaoEncontradas.length){
+        const fileMetaEl = document.getElementById('fileMeta');
+        fileMetaEl.textContent += ' · Atenção: colunas não encontradas no Excel — ' + colunasNaoEncontradas.join(', ');
         fileMetaEl.style.color = 'var(--risco-critico)';
       }
 
