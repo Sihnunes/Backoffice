@@ -1037,7 +1037,7 @@ function renderHistorico(rows){
   tbody.innerHTML = rows.map(r=>{
     const obs = getObs(r.nf);
     return `<tr>
-      <td class="nf">${escapeHtml(r.nf)}</td>
+      <td class="nf">${escapeHtml(padNfDisplay(r.nf))}</td>
       <td>${escapeHtml(r.dest) || '—'}${r.cidade?`<br><span class="msg">${escapeHtml(r.cidade)}${r.uf?'/'+escapeHtml(r.uf):''}</span>`:''}</td>
       <td>${escapeHtml(r.transp) || '—'}</td>
       <td>${fmtDate(r.previsao)}</td>
@@ -1058,6 +1058,14 @@ function normalizeNf(v){
   let s = String(v||'').replace(/[^\d]/g,'');
   s = s.replace(/^0+(?=\d)/,'');
   return s;
+}
+function padNfDisplay(v){
+  // Só para exibição no Histórico: repõe os zeros à esquerda que a planilha
+  // de histórico pode ter perdido antes de guardar a coluna como texto,
+  // pra ficar igual ao formato mostrado no Painel atual (9 dígitos).
+  const digits = String(v||'').replace(/[^\d]/g,'');
+  if(!digits) return String(v||'');
+  return digits.length < 9 ? digits.padStart(9,'0') : digits;
 }
 function getObsStore(){
   try{ return JSON.parse(localStorage.getItem('tb_cx_entregas_obs')||'{}'); }catch(e){ return {}; }
